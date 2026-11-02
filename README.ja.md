@@ -179,3 +179,7 @@ uv run cross-model-review export-schemas schemas   # モデルを変更した後
 ```
 
 設計判断、トレードオフ、既知の制約は [docs/design.ja.md](docs/design.ja.md) を参照してください。
+
+## ライセンス
+
+[Apache License 2.0](LICENSE)

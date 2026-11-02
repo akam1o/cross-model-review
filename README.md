@@ -176,3 +176,7 @@ uv run cross-model-review export-schemas schemas   # after changing models
 ```
 
 Design notes, trade-offs and known limitations: [docs/design.md](docs/design.md).
+
+## License
+
+[Apache License 2.0](LICENSE)

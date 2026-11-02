@@ -3,6 +3,8 @@ name = "cross-model-review"
 version = "0.1.0"
 description = "Cross-model code review: Claude Code and Codex CLI collaborating over the Agent2Agent (A2A) protocol"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     # The A2A protocol surface (protobuf types, AgentExecutor, TaskUpdater,
