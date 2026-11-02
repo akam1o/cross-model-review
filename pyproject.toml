@@ -1,0 +1,50 @@
+[project]
+name = "cross-model-review"
+version = "0.1.0"
+description = "Cross-model code review: Claude Code and Codex CLI collaborating over the Agent2Agent (A2A) protocol"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # The A2A protocol surface (protobuf types, AgentExecutor, TaskUpdater,
+    # JSON-RPC routes, ClientFactory) changed in 1.x; pin the exact version
+    # this project was verified against.
+    "a2a-sdk[http-server]==1.3.0",
+    "httpx>=0.28.1,<0.29",
+    "pydantic>=2.11,<3",
+    "uvicorn>=0.34,<1",
+]
+
+[project.scripts]
+cross-model-review = "cross_model_review.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=1.0",
+    "ruff>=0.11",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cross_model_review"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "SIM"]
+# Small local file reads/writes inside async code are intentional.
+ignore = ["ASYNC109", "ASYNC230", "ASYNC240", "SIM105"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests poll flags/files of servers and fake CLIs, and embed fake CLI scripts.
+"tests/*" = ["ASYNC110", "E501"]
