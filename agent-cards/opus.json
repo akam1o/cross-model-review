@@ -1,0 +1,85 @@
+{
+  "name": "cross-model-review-opus",
+  "description": "Design and simplification reviewer backed by the Claude Code CLI. Runs with a read-only tool set (Read, Grep, Glob) and no MCP servers.",
+  "supportedInterfaces": [
+    {
+      "url": "http://127.0.0.1:0/",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "version": "0.1.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "extensions": [
+      {
+        "uri": "urn:cross-model-review:ext:skill-io:v1",
+        "description": "Requests are a single DataPart matching the skill-request schema; results are an Artifact named '<skill>-result' with a single DataPart matching the skill-result schema.",
+        "params": {
+          "request_schema": "cross-model-review/skill-request@1",
+          "access": {
+            "review_simplification": "read-only",
+            "review_design": "read-only"
+          },
+          "result_schema": "cross-model-review/skill-result@1"
+        }
+      }
+    ]
+  },
+  "securitySchemes": {
+    "bearer": {
+      "httpAuthSecurityScheme": {
+        "description": "Per-run random token shared by the orchestrator.",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "bearer": {}
+      }
+    }
+  ],
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "review_design",
+      "name": "Review design (read-only)",
+      "description": "Design and maintainability review of the change set. Read-only tools only.",
+      "tags": [
+        "review",
+        "design",
+        "read-only"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "review_simplification",
+      "name": "Review simplification (read-only)",
+      "description": "Detect unnecessary complexity and propose simpler alternatives. Read-only tools only.",
+      "tags": [
+        "review",
+        "simplification",
+        "read-only"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ]
+}

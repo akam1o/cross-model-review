@@ -1,0 +1,100 @@
+{
+  "name": "cross-model-review-codex",
+  "description": "Defect reviewer and fixer backed by the Codex CLI. Review and verification run in a read-only sandbox; fixes run in a workspace-write sandbox without network.",
+  "supportedInterfaces": [
+    {
+      "url": "http://127.0.0.1:0/",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "version": "0.1.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "extensions": [
+      {
+        "uri": "urn:cross-model-review:ext:skill-io:v1",
+        "description": "Requests are a single DataPart matching the skill-request schema; results are an Artifact named '<skill>-result' with a single DataPart matching the skill-result schema.",
+        "params": {
+          "request_schema": "cross-model-review/skill-request@1",
+          "access": {
+            "verify_changes": "read-only",
+            "review_changes": "read-only",
+            "fix_findings": "write-enabled"
+          },
+          "result_schema": "cross-model-review/skill-result@1"
+        }
+      }
+    ]
+  },
+  "securitySchemes": {
+    "bearer": {
+      "httpAuthSecurityScheme": {
+        "description": "Per-run random token shared by the orchestrator.",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "bearer": {}
+      }
+    }
+  ],
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "review_changes",
+      "name": "Review changes (read-only)",
+      "description": "Independent defect review of the uncommitted change set. Read-only sandbox.",
+      "tags": [
+        "review",
+        "defects",
+        "read-only"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "fix_findings",
+      "name": "Fix findings (write-enabled)",
+      "description": "Fix the given findings with minimal edits. workspace-write sandbox, no network, exclusive workspace lock.",
+      "tags": [
+        "fix",
+        "write-enabled"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    },
+    {
+      "id": "verify_changes",
+      "name": "Verify fixes (read-only)",
+      "description": "Check whether given findings are resolved and whether fixes introduced new defects. Read-only sandbox.",
+      "tags": [
+        "verify",
+        "read-only"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ]
+}
