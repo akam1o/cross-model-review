@@ -1,0 +1,15 @@
+max_iterations = 2
+
+[[tests.commands]]
+name = "unit"
+command = ["python3", "test_chunk.py"]
+timeout_s = 60
+
+[agents.codex]
+review_timeout_s = 600
+fix_timeout_s = 900
+verify_timeout_s = 600
+
+[agents.opus]
+review_timeout_s = 600
+max_budget_usd = 3
