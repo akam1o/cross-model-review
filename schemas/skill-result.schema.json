@@ -1,0 +1,378 @@
+{
+  "$defs": {
+    "CLIRunInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "cli": {
+          "enum": [
+            "codex",
+            "claude",
+            "mock"
+          ],
+          "title": "Cli",
+          "type": "string"
+        },
+        "cli_version": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cli Version"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model"
+        },
+        "sandbox": {
+          "enum": [
+            "read-only",
+            "workspace-write"
+          ],
+          "title": "Sandbox",
+          "type": "string"
+        },
+        "exit_code": {
+          "title": "Exit Code",
+          "type": "integer"
+        },
+        "duration_s": {
+          "minimum": 0,
+          "title": "Duration S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cli",
+        "cli_version",
+        "model",
+        "sandbox",
+        "exit_code",
+        "duration_s"
+      ],
+      "title": "CLIRunInfo",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "correctness",
+            "security",
+            "reliability",
+            "performance",
+            "data_integrity",
+            "testing",
+            "design",
+            "maintainability",
+            "simplification",
+            "other"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 8000,
+          "title": "Description",
+          "type": "string"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Line"
+        },
+        "recommendation": {
+          "maxLength": 8000,
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "severity",
+        "category",
+        "title",
+        "description",
+        "file",
+        "line",
+        "recommendation",
+        "confidence"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FixItem": {
+      "additionalProperties": false,
+      "properties": {
+        "finding_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "fixed",
+            "partially_fixed",
+            "not_fixed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "notes": {
+          "maxLength": 8000,
+          "title": "Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "status",
+        "notes"
+      ],
+      "title": "FixItem",
+      "type": "object"
+    },
+    "FixOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 8000,
+          "title": "Summary",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/FixItem"
+          },
+          "maxItems": 200,
+          "title": "Items",
+          "type": "array"
+        },
+        "files_changed": {
+          "items": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Files Changed",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "items",
+        "files_changed"
+      ],
+      "title": "FixOutput",
+      "type": "object"
+    },
+    "ReviewOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 8000,
+          "title": "Summary",
+          "type": "string"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "maxItems": 200,
+          "title": "Findings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "findings"
+      ],
+      "title": "ReviewOutput",
+      "type": "object"
+    },
+    "VerifyItem": {
+      "additionalProperties": false,
+      "properties": {
+        "finding_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "resolved",
+            "unresolved",
+            "unclear"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "notes": {
+          "maxLength": 8000,
+          "title": "Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "status",
+        "notes"
+      ],
+      "title": "VerifyItem",
+      "type": "object"
+    },
+    "VerifyOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 8000,
+          "title": "Summary",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/VerifyItem"
+          },
+          "maxItems": 200,
+          "title": "Items",
+          "type": "array"
+        },
+        "new_findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "maxItems": 200,
+          "title": "New Findings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "items",
+        "new_findings"
+      ],
+      "title": "VerifyOutput",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "cross-model-review/skill-result@1",
+      "default": "cross-model-review/skill-result@1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "skill": {
+      "enum": [
+        "review_changes",
+        "fix_findings",
+        "verify_changes",
+        "review_design",
+        "review_simplification"
+      ],
+      "title": "Skill",
+      "type": "string"
+    },
+    "agent": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Agent",
+      "type": "string"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewOutput"
+        },
+        {
+          "$ref": "#/$defs/FixOutput"
+        },
+        {
+          "$ref": "#/$defs/VerifyOutput"
+        }
+      ],
+      "title": "Output"
+    },
+    "run": {
+      "$ref": "#/$defs/CLIRunInfo"
+    }
+  },
+  "required": [
+    "skill",
+    "agent",
+    "output",
+    "run"
+  ],
+  "title": "SkillResult",
+  "type": "object"
+}

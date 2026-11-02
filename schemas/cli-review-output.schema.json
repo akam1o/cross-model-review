@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "correctness",
+            "security",
+            "reliability",
+            "performance",
+            "data_integrity",
+            "testing",
+            "design",
+            "maintainability",
+            "simplification",
+            "other"
+          ],
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recommendation": {
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "severity",
+        "category",
+        "title",
+        "description",
+        "file",
+        "line",
+        "recommendation",
+        "confidence"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "summary",
+    "findings"
+  ],
+  "type": "object"
+}

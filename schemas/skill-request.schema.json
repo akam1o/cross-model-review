@@ -1,0 +1,316 @@
+{
+  "$defs": {
+    "ChangedFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 4096,
+          "title": "Path",
+          "type": "string"
+        },
+        "change": {
+          "enum": [
+            "added",
+            "modified",
+            "deleted",
+            "renamed",
+            "copied",
+            "type_changed",
+            "other"
+          ],
+          "title": "Change",
+          "type": "string"
+        },
+        "old_path": {
+          "anyOf": [
+            {
+              "maxLength": 4096,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Old Path"
+        },
+        "committed": {
+          "default": false,
+          "title": "Committed",
+          "type": "boolean"
+        },
+        "staged": {
+          "default": false,
+          "title": "Staged",
+          "type": "boolean"
+        },
+        "unstaged": {
+          "default": false,
+          "title": "Unstaged",
+          "type": "boolean"
+        },
+        "untracked": {
+          "default": false,
+          "title": "Untracked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "change"
+      ],
+      "title": "ChangedFile",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "correctness",
+            "security",
+            "reliability",
+            "performance",
+            "data_integrity",
+            "testing",
+            "design",
+            "maintainability",
+            "simplification",
+            "other"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 8000,
+          "title": "Description",
+          "type": "string"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Line"
+        },
+        "recommendation": {
+          "maxLength": 8000,
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "severity",
+        "category",
+        "title",
+        "description",
+        "file",
+        "line",
+        "recommendation",
+        "confidence"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "ReviewTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "base_ref": {
+          "maxLength": 256,
+          "title": "Base Ref",
+          "type": "string"
+        },
+        "base_commit": {
+          "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+          "title": "Base Commit",
+          "type": "string"
+        },
+        "changed_files": {
+          "items": {
+            "$ref": "#/$defs/ChangedFile"
+          },
+          "maxItems": 20000,
+          "title": "Changed Files",
+          "type": "array"
+        },
+        "diff": {
+          "title": "Diff",
+          "type": "string"
+        },
+        "diff_truncated": {
+          "title": "Diff Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "base_ref",
+        "base_commit",
+        "changed_files",
+        "diff",
+        "diff_truncated"
+      ],
+      "title": "ReviewTarget",
+      "type": "object"
+    },
+    "TaskFinding": {
+      "additionalProperties": false,
+      "description": "A finding as sent back to an agent (fix / verify), tagged with its origin.",
+      "properties": {
+        "source": {
+          "enum": [
+            "codex",
+            "opus",
+            "tests"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "finding": {
+          "$ref": "#/$defs/Finding"
+        }
+      },
+      "required": [
+        "source",
+        "finding"
+      ],
+      "title": "TaskFinding",
+      "type": "object"
+    },
+    "WorkspaceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "local_path",
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "path"
+      ],
+      "title": "WorkspaceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "cross-model-review/skill-request@1",
+      "default": "cross-model-review/skill-request@1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "skill": {
+      "enum": [
+        "review_changes",
+        "fix_findings",
+        "verify_changes",
+        "review_design",
+        "review_simplification"
+      ],
+      "title": "Skill",
+      "type": "string"
+    },
+    "run_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "iteration": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Iteration",
+      "type": "integer"
+    },
+    "workspace": {
+      "$ref": "#/$defs/WorkspaceRef"
+    },
+    "target": {
+      "$ref": "#/$defs/ReviewTarget"
+    },
+    "findings": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TaskFinding"
+      },
+      "maxItems": 200,
+      "title": "Findings",
+      "type": "array"
+    },
+    "instructions": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Instructions",
+      "type": "string"
+    }
+  },
+  "required": [
+    "skill",
+    "run_id",
+    "iteration",
+    "workspace",
+    "target"
+  ],
+  "title": "SkillRequest",
+  "type": "object"
+}

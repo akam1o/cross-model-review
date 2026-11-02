@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "FixItem": {
+      "additionalProperties": false,
+      "properties": {
+        "finding_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "fixed",
+            "partially_fixed",
+            "not_fixed"
+          ],
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "status",
+        "notes"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/FixItem"
+      },
+      "type": "array"
+    },
+    "files_changed": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "summary",
+    "items",
+    "files_changed"
+  ],
+  "type": "object"
+}

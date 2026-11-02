@@ -1,0 +1,644 @@
+{
+  "$defs": {
+    "ApplyResult": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "applied",
+            "not_needed",
+            "skipped",
+            "conflict",
+            "in_place"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "patch_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Patch Path"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "patch_path",
+        "detail"
+      ],
+      "title": "ApplyResult",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "correctness",
+            "security",
+            "reliability",
+            "performance",
+            "data_integrity",
+            "testing",
+            "design",
+            "maintainability",
+            "simplification",
+            "other"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 8000,
+          "title": "Description",
+          "type": "string"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "File"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Line"
+        },
+        "recommendation": {
+          "maxLength": 8000,
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "severity",
+        "category",
+        "title",
+        "description",
+        "file",
+        "line",
+        "recommendation",
+        "confidence"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "GateCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "critical_findings",
+            "high_findings",
+            "required_tests",
+            "final_review",
+            "git_integrity",
+            "a2a_tasks"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "unverified"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "detail"
+      ],
+      "title": "GateCheck",
+      "type": "object"
+    },
+    "GateResult": {
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "enum": [
+            "passed",
+            "failed",
+            "unverified"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/GateCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "verdict",
+        "checks"
+      ],
+      "title": "GateResult",
+      "type": "object"
+    },
+    "IterationRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "number": {
+          "title": "Number",
+          "type": "integer"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/TaskRecord"
+          },
+          "title": "Tasks",
+          "type": "array"
+        },
+        "findings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "fixed_files": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fixed Files",
+          "type": "array"
+        },
+        "tests": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TestsSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "number",
+        "tasks",
+        "findings",
+        "fixed_files"
+      ],
+      "title": "IterationRecord",
+      "type": "object"
+    },
+    "TaskRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "skill": {
+          "enum": [
+            "review_changes",
+            "fix_findings",
+            "verify_changes",
+            "review_design",
+            "review_simplification"
+          ],
+          "title": "Skill",
+          "type": "string"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Task Id"
+        },
+        "state": {
+          "enum": [
+            "completed",
+            "failed",
+            "canceled",
+            "rejected",
+            "timeout",
+            "invalid_artifact",
+            "error"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "duration_s": {
+          "title": "Duration S",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "agent",
+        "skill",
+        "iteration",
+        "task_id",
+        "state",
+        "duration_s"
+      ],
+      "title": "TaskRecord",
+      "type": "object"
+    },
+    "TestRun": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Command"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "timeout",
+            "error"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Exit Code"
+        },
+        "duration_s": {
+          "title": "Duration S",
+          "type": "number"
+        },
+        "log_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Log Path"
+        }
+      },
+      "required": [
+        "name",
+        "command",
+        "required",
+        "status",
+        "exit_code",
+        "duration_s"
+      ],
+      "title": "TestRun",
+      "type": "object"
+    },
+    "TestsSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unverified"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "runs": {
+          "items": {
+            "$ref": "#/$defs/TestRun"
+          },
+          "title": "Runs",
+          "type": "array"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "runs",
+        "detail"
+      ],
+      "title": "TestsSummary",
+      "type": "object"
+    },
+    "TrackedFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "codex",
+            "opus",
+            "tests"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        },
+        "finding": {
+          "$ref": "#/$defs/Finding"
+        },
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "fix_attempted",
+            "resolved",
+            "unresolved",
+            "not_selected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "notes": {
+          "default": "",
+          "title": "Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "source",
+        "iteration",
+        "finding"
+      ],
+      "title": "TrackedFinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "cross-model-review/report@1",
+      "default": "cross-model-review/report@1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "converged",
+        "max_iterations_reached",
+        "no_progress",
+        "aborted",
+        "cancelled",
+        "no_changes"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "repo": {
+      "title": "Repo",
+      "type": "string"
+    },
+    "base_ref": {
+      "title": "Base Ref",
+      "type": "string"
+    },
+    "base_commit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Commit"
+    },
+    "snapshot_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Snapshot Ref"
+    },
+    "workspace_mode": {
+      "enum": [
+        "worktree",
+        "in-place"
+      ],
+      "title": "Workspace Mode",
+      "type": "string"
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "finished_at": {
+      "title": "Finished At",
+      "type": "string"
+    },
+    "iterations": {
+      "items": {
+        "$ref": "#/$defs/IterationRecord"
+      },
+      "title": "Iterations",
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/TrackedFinding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "final_review_completed": {
+      "title": "Final Review Completed",
+      "type": "boolean"
+    },
+    "tests": {
+      "$ref": "#/$defs/TestsSummary"
+    },
+    "git_issues": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Git Issues",
+      "type": "array"
+    },
+    "apply": {
+      "$ref": "#/$defs/ApplyResult"
+    },
+    "gate": {
+      "$ref": "#/$defs/GateResult"
+    },
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Errors",
+      "type": "array"
+    },
+    "warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "output_dir": {
+      "title": "Output Dir",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "status",
+    "repo",
+    "base_ref",
+    "base_commit",
+    "snapshot_ref",
+    "workspace_mode",
+    "started_at",
+    "finished_at",
+    "iterations",
+    "findings",
+    "final_review_completed",
+    "tests",
+    "git_issues",
+    "apply",
+    "gate",
+    "errors",
+    "output_dir"
+  ],
+  "title": "Report",
+  "type": "object"
+}
