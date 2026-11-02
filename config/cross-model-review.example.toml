@@ -1,0 +1,73 @@
+# cross-model-review configuration.
+#
+# Files are merged in this order (later wins):
+#   1. built-in defaults
+#   2. ~/.config/cross-model-review/config.toml   ($XDG_CONFIG_HOME is honoured)
+#   3. <repo>/.cross-model-review.toml
+#   4. --config <file>
+#
+# Every key below is optional; the values shown are the defaults unless noted.
+
+# Fix rounds before the run stops and reports unresolved findings.
+max_iterations = 3
+# Severities that Codex is asked to fix. "critical" and "high" are mandatory.
+fix_severities = ["critical", "high"]
+# Diff bytes embedded in each prompt (agents can read files for the rest).
+max_diff_bytes = 200000
+# Extra focus passed to every reviewer.
+review_instructions = ""
+# Run directory root. Default: <git-common-dir>/cross-model-review/runs
+output_dir = ""
+# Lock files. Default: <system temp>/cross-model-review-locks-<uid>
+lock_dir = ""
+
+[workspace]
+# "worktree": agents work in a temporary Git worktree seeded from a snapshot
+#             of your changes; fixes come back as a patch.
+# "in-place": agents work directly in your working tree.
+mode = "worktree"
+apply_fixes = true
+keep_worktree = false
+keep_snapshot_ref = true
+# Worktree mode only: commands run once before the first review, for example
+# to install dependencies that live in ignored directories.
+# [[workspace.setup_commands]]
+# name = "deps"
+# command = ["uv", "sync"]
+# timeout_s = 600
+
+# Required test commands decide the "required_tests" gate check. With no
+# required command the gate is "unverified", never "passed".
+# A list runs directly; a string runs through /bin/sh -c.
+# [[tests.commands]]
+# name = "unit"
+# command = ["uv", "run", "pytest", "-q"]
+# required = true
+# timeout_s = 900
+
+[agents.codex]
+url = ""                 # connect to an existing A2A agent instead of spawning one
+cli_path = "codex"
+min_cli_version = "0.154.0"
+model = ""               # empty = Codex default
+reasoning_effort = ""    # e.g. "high"
+ignore_user_config = true
+review_timeout_s = 1200
+fix_timeout_s = 1800
+verify_timeout_s = 1200
+
+[agents.opus]
+url = ""
+cli_path = "claude"
+min_cli_version = "2.1.0"
+model = "opus"
+effort = ""              # low | medium | high | xhigh | max
+max_budget_usd = 0       # 0 = no per-call cap
+restricted = true
+review_timeout_s = 1200
+
+[a2a]
+host = "127.0.0.1"
+startup_timeout_s = 30
+cancel_timeout_s = 15
+task_timeout_margin_s = 60
