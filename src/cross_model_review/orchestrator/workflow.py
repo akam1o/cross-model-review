@@ -19,6 +19,7 @@ from cross_model_review.gitops import Git, GitError, RepoState
 from cross_model_review.locks import LockBusy, default_lock_dir, run_lock, workspace_lock
 from cross_model_review.models import (
     BLOCKING_SEVERITIES,
+    REVIEW_SKILLS,
     ApplyResult,
     ChangedFile,
     Finding,
@@ -170,7 +171,11 @@ class Orchestrator:
         self.expected_tree = await self.ws_git.worktree_tree()
         if self.expected_tree != self.initial.worktree_tree:
             raise Abort("workspace does not match the snapshot")
-        if self.cfg.workspace.mode == "worktree" and self.cfg.workspace.setup_commands:
+        if (
+            self.cfg.workspace.mode == "worktree"
+            and self.cfg.workspace.setup_commands
+            and not self.cfg.review_only
+        ):
             summary = await self._run_commands(self.cfg.workspace.setup_commands, "setup")
             if summary.status == "failed":
                 raise Abort(f"workspace setup failed: {summary.detail}")
@@ -254,6 +259,8 @@ class Orchestrator:
         it: IterationRecord,
         findings: list[TrackedFinding] | None = None,
     ) -> TaskOutcome:
+        if self.cfg.review_only and skill not in REVIEW_SKILLS:
+            raise Abort(f"{skill} is not allowed in review-only mode")
         agent = self.agents["codex" if skill in CODEX_SKILLS else "opus"]
         request = SkillRequest(
             skill=skill,
@@ -343,6 +350,8 @@ class Orchestrator:
 
     async def _fix(self, keys: list[str], iteration: int, it: IterationRecord) -> bool:
         """Fix and verify ``keys``. Returns whether the workspace changed."""
+        if self.cfg.review_only:
+            raise Abort("fixing is not allowed in review-only mode")
         items = [self.findings[k] for k in keys]
         before = self.expected_tree
         outcome = await self._call("fix_findings", iteration, it, items)
@@ -380,6 +389,9 @@ class Orchestrator:
     # ------------------------------------------------------------------ tests
 
     async def _run_commands(self, commands: list[TestCommand], label: str) -> TestsSummary:
+        # Configured commands are arbitrary and could modify the code.
+        if self.cfg.review_only:
+            raise Abort(f"{label} commands are not allowed in review-only mode")
         runs: list[TestRun] = []
         log_dir = self.out_dir / "logs" / label
         with workspace_lock(self.lock_dir, self.workspace, exclusive=True):
@@ -509,7 +521,8 @@ class Orchestrator:
         elif not allow_fix:
             self.pending.extend(to_fix)
 
-        it.tests = await self._run_tests(number)
+        if not self.cfg.review_only:
+            it.tests = await self._run_tests(number)
         return self.expected_tree != start_tree
 
     def _final_review_keys(self) -> list[str] | None:
@@ -523,7 +536,21 @@ class Orchestrator:
             return None
         return [k for r in latest.values() for k in r.keys]
 
+    async def _review_only(self) -> str:
+        """Review the snapshot once and leave every blocking finding unresolved.
+
+        Read-only tasks cannot change the tree (``_check_read_only`` aborts),
+        so another round would review the same snapshot again: max_iterations
+        is an upper bound, not a repeat count.
+        """
+        await self._iteration(1, allow_fix=False)
+        for key in self._fixable(self._final_review_keys() or []):
+            self.findings[key].status = "unresolved"
+        return "reviewed"
+
     async def _loop(self) -> str:
+        if self.cfg.review_only:
+            return await self._review_only()
         for number in range(1, self.cfg.max_iterations + 1):
             changed = await self._iteration(number, allow_fix=True)
             if self.no_progress:
@@ -558,6 +585,25 @@ class Orchestrator:
         ):
             if before != after:
                 self.git_issues.append(f"{label} changed during the run")
+        if self.cfg.review_only:
+            # Never apply anything. The review covers only the snapshot, so
+            # a working tree that changed meanwhile is an integrity issue.
+            if now.worktree_tree != self.initial.worktree_tree:
+                self.git_issues.append(
+                    "working tree changed during the run; the review covers the snapshot only"
+                )
+            if patch:
+                self.git_issues.append("the workspace changed in a review-only run")
+                return ApplyResult(
+                    status="skipped",
+                    patch_path=str(patch_path),
+                    detail="review-only: changes were not applied",
+                )
+            return ApplyResult(
+                status="not_needed",
+                patch_path=None,
+                detail="review-only: no fixes were requested or applied",
+            )
         if self.cfg.workspace.mode == "in-place":
             if now.worktree_tree != final_tree:
                 self.git_issues.append("working tree differs from the last reviewed state")
@@ -688,7 +734,13 @@ class Orchestrator:
         if status == "no_changes":
             final_keys = []
         tests = self.latest_tests
-        if tests is None or self.latest_tests_tree != getattr(self, "expected_tree", None):
+        if self.cfg.review_only:
+            tests = TestsSummary(
+                status="unverified",
+                runs=[],
+                detail="review-only: setup and test commands were not executed",
+            )
+        elif tests is None or self.latest_tests_tree != getattr(self, "expected_tree", None):
             tests = TestsSummary(
                 status="unverified", runs=[], detail="tests did not run on the final state"
             )
@@ -704,6 +756,7 @@ class Orchestrator:
         report = Report(
             run_id=self.run_id,
             status=status,
+            review_only=self.cfg.review_only,
             repo=str(self.root),
             base_ref=self.opts.base,
             base_commit=getattr(self, "base_commit", None),

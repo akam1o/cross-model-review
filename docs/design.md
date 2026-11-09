@@ -125,6 +125,8 @@ Prepared but not enabled:
 
 - **Untrusted repositories.** `<repo>/.cross-model-review.toml` can set CLI
   paths and commands. Test commands run without a sandbox.
+  `--no-config-discovery --config <file>` reads only the given file, and
+  `--review-only` runs no setup or test commands.
 - **Process escape.** Processes that create their own session (`setsid`,
   daemons) are not reached by the process-group kill.
 - **Sandbox availability.** Codex sandboxing depends on the OS (Seatbelt on

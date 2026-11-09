@@ -63,12 +63,43 @@ In Claude Code:
 /cross-model-review
 /cross-model-review --base main          # review the branch since its merge base with main
 /cross-model-review --max-iterations 2
+/cross-model-review --review-only        # review only; never change code
 ```
 
 From a terminal:
 
 ```bash
 cross-model-review run --repo . [--base REF] [--config FILE] [--mode worktree|in-place] [--json]
+                       [--review-only] [--no-config-discovery]
+```
+
+### Review-only mode
+
+`--review-only` (or `review_only = true`) runs the Codex defect review and the
+Opus design and simplification reviews on the same snapshot and changes
+nothing:
+
+- No `fix_findings` / `verify_changes` task runs, and no patch is applied (in
+  `in-place` mode too).
+- No `workspace.setup_commands` or `tests.commands` run, because configured
+  commands could modify the code. `required_tests` is therefore `UNVERIFIED`.
+- Read-only tasks cannot change the snapshot, so the run stops after one
+  round. `--max-iterations` is an upper bound, not a repeat count;
+  `--max-iterations 2` still gives one round.
+- Critical/High findings stay `unresolved` and fail the gate. With none, the
+  verdict is `unverified` (exit code 2), never `passed`.
+- The report has `"review_only": true` and `"status": "reviewed"`.
+
+`--no-config-discovery` reads only the `--config` file (required with this
+option) and skips the user and repository config files. A config ending in
+`.json` is read as JSON, for example the output of
+`Config(...).model_dump_json()`. Use it when the caller supplies a trusted
+configuration, so that files in the repository or home directory cannot change
+CLI paths or commands:
+
+```bash
+cross-model-review run --repo . --review-only --max-iterations 2 \
+    --no-config-discovery --config trusted.json --json
 ```
 
 Exit codes: `0` passed (or nothing to review), `1` failed, `2` unverified,
@@ -101,7 +132,8 @@ command = ["uv", "run", "pytest", "-q"]
 ```
 
 > A repository config can set CLI paths and commands that are executed on your
-> machine. Only run cross-model-review on repositories you trust.
+> machine. Only run cross-model-review on repositories you trust, or use
+> `--no-config-discovery --config <trusted file>`.
 
 ## Quality gate
 

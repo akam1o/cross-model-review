@@ -378,7 +378,12 @@ class Report(StrictModel):
         "aborted",
         "cancelled",
         "no_changes",
+        # Review-only run finished its review; the gate decides pass / fail.
+        "reviewed",
     ]
+    # True when no fix/verify task, setup/test command or patch application
+    # was allowed in this run.
+    review_only: bool = False
     repo: str
     base_ref: str
     base_commit: str | None

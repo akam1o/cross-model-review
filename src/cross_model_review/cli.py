@@ -54,17 +54,28 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     setup_logging("orchestrator", level=args.log_level)
     repo = Path(args.repo).resolve()
+    if args.no_config_discovery and not args.config:
+        print("cross-model-review: --no-config-discovery requires --config", file=sys.stderr)
+        return EXIT_USAGE
     try:
-        top = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"], cwd=repo, capture_output=True, text=True
+        root = None
+        if not args.no_config_discovery:
+            top = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"], cwd=repo, capture_output=True, text=True
+            )
+            root = Path(top.stdout.strip()) if top.returncode == 0 else None
+        config, used = load_config(
+            root,
+            Path(args.config) if args.config else None,
+            discover=not args.no_config_discovery,
         )
-        root = Path(top.stdout.strip()) if top.returncode == 0 else None
-        config, used = load_config(root, Path(args.config) if args.config else None)
     except Exception as exc:
         print(f"cross-model-review: invalid configuration: {exc}", file=sys.stderr)
         return EXIT_USAGE
     if args.max_iterations:
         config = config.model_copy(update={"max_iterations": args.max_iterations})
+    if args.review_only:
+        config = config.model_copy(update={"review_only": True})
     if args.mode:
         config.workspace = config.workspace.model_copy(update={"mode": args.mode})
 
@@ -216,8 +227,19 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="review the current changes of a Git repository")
     run.add_argument("--repo", default=".", help="repository path (default: current directory)")
     run.add_argument("--base", default="HEAD", help="review changes since this ref (default: HEAD)")
-    run.add_argument("--config", help="explicit config file (TOML)")
+    run.add_argument("--config", help="explicit config file (TOML, or JSON if it ends in .json)")
+    run.add_argument(
+        "--no-config-discovery",
+        action="store_true",
+        help="read only --config (required); ignore the user and repository config files",
+    )
     run.add_argument("--max-iterations", type=int, choices=range(1, 11), metavar="N")
+    run.add_argument(
+        "--review-only",
+        action="store_true",
+        help="review without fixing: no fix/verify tasks, no setup or test commands, "
+        "nothing applied; --max-iterations is only an upper bound",
+    )
     run.add_argument("--mode", choices=["worktree", "in-place"])
     run.add_argument("--json", action="store_true", help="print report JSON instead of Markdown")
     run.add_argument("--log-level", default="INFO")

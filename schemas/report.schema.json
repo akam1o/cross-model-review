@@ -514,10 +514,16 @@
         "no_progress",
         "aborted",
         "cancelled",
-        "no_changes"
+        "no_changes",
+        "reviewed"
       ],
       "title": "Status",
       "type": "string"
+    },
+    "review_only": {
+      "default": false,
+      "title": "Review Only",
+      "type": "boolean"
     },
     "repo": {
       "title": "Repo",

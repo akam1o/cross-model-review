@@ -4,10 +4,15 @@
 #   1. built-in defaults
 #   2. ~/.config/cross-model-review/config.toml   ($XDG_CONFIG_HOME is honoured)
 #   3. <repo>/.cross-model-review.toml
-#   4. --config <file>
+#   4. --config <file>  (a .json file is read as JSON)
+#
+# With --no-config-discovery only the --config file is read.
 #
 # Every key below is optional; the values shown are the defaults unless noted.
 
+# Review only (same as --review-only): no fixes, no setup or test commands,
+# nothing applied. One review round; max_iterations is only an upper bound.
+review_only = false
 # Fix rounds before the run stops and reports unresolved findings.
 max_iterations = 3
 # Severities that Codex is asked to fix. "critical" and "high" are mandatory.
