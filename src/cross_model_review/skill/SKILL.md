@@ -23,7 +23,19 @@ code yourself while it runs.
    Use the Bash tool with `run_in_background: true`, then wait for the
    completion notification. Do not poll in a loop.
    Useful arguments: `--base <ref>` (review a branch since its merge base),
-   `--max-iterations N`, `--mode in-place`, `--config <file>`.
+   `--max-iterations N`, `--mode in-place`, `--config <file>`,
+   `--review-only`, `--no-config-discovery`.
+
+   `--review-only` reviews without changing code: no fix or verify task runs,
+   no setup or test command runs, and nothing is applied. The snapshot cannot
+   change, so the run stops after one review round even with
+   `--max-iterations 2` (the value is only an upper bound). Critical/High
+   findings stay unresolved and fail the gate; with none, the verdict is
+   `UNVERIFIED` because no tests ran. The report says `review_only: true`.
+
+   `--no-config-discovery` reads only the `--config` file (TOML or `.json`)
+   and ignores `~/.config/cross-model-review/config.toml` and the repository's
+   `.cross-model-review.toml`.
 
 2. While it runs, do not edit files in the repository. If the working tree
    changes during the run, the fixes are not applied and a patch is left
@@ -33,9 +45,10 @@ code yourself while it runs.
    saved as `report.md` in the run directory printed at the end). Summarise:
    - the gate verdict (`PASSED`, `FAILED` or `UNVERIFIED`) and failing checks,
    - unresolved findings, highest severity first,
-   - whether fixes were applied, or where the patch is,
+   - whether fixes were applied, or where the patch is (in review-only mode,
+     say that no fixes were attempted),
    - test status. `UNVERIFIED` means no required tests were configured or run;
-     never describe it as passing.
+     never describe it as passing. In review-only mode no tests were run.
 
 4. Exit codes: 0 passed (or nothing to review), 1 failed, 2 unverified,
    3 usage/configuration error, 130 cancelled. On exit code 3, show the

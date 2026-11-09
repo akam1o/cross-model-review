@@ -64,12 +64,41 @@ Claude Code で:
 /cross-model-review
 /cross-model-review --base main          # main との merge base 以降のブランチ全体をレビュー
 /cross-model-review --max-iterations 2
+/cross-model-review --review-only        # レビューのみ。コードは変更しない
 ```
 
 ターミナルから:
 
 ```bash
 cross-model-review run --repo . [--base REF] [--config FILE] [--mode worktree|in-place] [--json]
+                       [--review-only] [--no-config-discovery]
+```
+
+### レビュー専用モード
+
+`--review-only`（または `review_only = true`）を指定すると、同じスナップショットに
+対して Codex の欠陥レビューと Opus の設計・簡素化レビューだけを行い、何も変更しません。
+
+- `fix_findings` / `verify_changes` タスクは実行せず、パッチも適用しません
+  （`in-place` モードでも同じ）。
+- 設定されたコマンドはコードを変更し得るため、`workspace.setup_commands` と
+  `tests.commands` は実行しません。そのため `required_tests` は `UNVERIFIED` になります。
+- 読み取り専用タスクはスナップショットを変更できないため、1 ラウンドで終了します。
+  `--max-iterations` は上限であり、繰り返し回数ではありません。
+  `--max-iterations 2` でも 1 ラウンドです。
+- Critical / High の指摘は `unresolved` のまま残り、ゲートは失敗します。指摘がなくても
+  判定は `unverified`（終了コード 2）で、`passed` にはなりません。
+- レポートには `"review_only": true` と `"status": "reviewed"` が入ります。
+
+`--no-config-discovery` を指定すると `--config` のファイルだけを読み（このオプションでは
+`--config` が必須）、ユーザー設定とリポジトリ設定は読みません。`.json` で終わる設定
+ファイルは JSON として読みます（例: `Config(...).model_dump_json()` の出力）。
+呼び出し側が信頼できる設定を渡し、リポジトリやホームディレクトリのファイルで CLI パスや
+コマンドを変更させたくない場合に使います。
+
+```bash
+cross-model-review run --repo . --review-only --max-iterations 2 \
+    --no-config-discovery --config trusted.json --json
 ```
 
 終了コード: `0` 成功（またはレビュー対象なし）、`1` 失敗、`2` 未検証（unverified）、
@@ -102,7 +131,8 @@ command = ["uv", "run", "pytest", "-q"]
 ```
 
 > リポジトリ内の設定ファイルでは、手元で実行される CLI パスやコマンドを
-> 指定できます。信頼できるリポジトリでのみ実行してください。
+> 指定できます。信頼できるリポジトリでのみ実行するか、
+> `--no-config-discovery --config <信頼できるファイル>` を使ってください。
 
 ## 品質ゲート
 

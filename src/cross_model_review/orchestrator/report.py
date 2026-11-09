@@ -22,8 +22,14 @@ def render_markdown(report: Report) -> str:
         f"- Repository: `{report.repo}` "
         f"(base `{report.base_ref}` = `{(report.base_commit or '')[:12]}`)",
         f"- Workspace mode: {report.workspace_mode}; iterations: {len(report.iterations)}",
-        f"- Fixes: **{report.apply.status}** — {report.apply.detail}",
     ]
+    if report.review_only:
+        lines.append(
+            "- Review-only: **yes** — no fix/verify tasks, setup or test commands ran and "
+            "nothing was applied. The snapshot cannot change, so one review round is final "
+            "(max iterations is only an upper bound)."
+        )
+    lines.append(f"- Fixes: **{report.apply.status}** — {report.apply.detail}")
     if report.apply.patch_path:
         lines.append(f"- Patch: `{report.apply.patch_path}`")
     if report.snapshot_ref:

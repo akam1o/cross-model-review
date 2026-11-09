@@ -125,6 +125,8 @@ strict な structured output の方言を要求するため、CLI 用スキー�
 
 - **信頼できないリポジトリ。** `<repo>/.cross-model-review.toml` で CLI パスや
   コマンドを指定できます。テストコマンドはサンドボックスなしで実行されます。
+  `--no-config-discovery --config <file>` は指定したファイルだけを読み、
+  `--review-only` は setup コマンドもテストコマンドも実行しません。
 - **プロセスの逃走。** 自分で新しいセッションを作るプロセス（`setsid`、
   デーモン）にはプロセスグループ単位の kill が届きません。
 - **サンドボックスの可用性。** Codex のサンドボックスは OS に依存します

@@ -6,11 +6,15 @@ Configuration is merged from (lowest to highest precedence):
 2. the user file ``$XDG_CONFIG_HOME/cross-model-review/config.toml``
    (``~/.config/...`` when unset),
 3. the repository file ``<repo>/.cross-model-review.toml``,
-4. an explicit ``--config`` file.
+4. an explicit ``--config`` file (TOML, or JSON when the name ends in ``.json``).
+
+With ``discover=False`` (``--no-config-discovery``) only the explicit file is
+read, so neither the user file nor a repository file can inject commands.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import tomllib
 from pathlib import Path
@@ -113,6 +117,10 @@ class A2AConfig(_Section):
 
 
 class Config(_Section):
+    # Review only: no fix/verify tasks, no setup or test commands, no patch is
+    # applied. One round reviews the unchanged snapshot; max_iterations is an
+    # upper bound and further rounds would review the same tree again.
+    review_only: bool = False
     max_iterations: Annotated[int, Field(ge=1, le=10)] = 3
     fix_severities: list[Severity] = ["critical", "high"]
     max_diff_bytes: Annotated[int, Field(ge=1000, le=5_000_000)] = 200_000
@@ -148,18 +156,35 @@ def user_config_path() -> Path:
     return Path(base) / "cross-model-review" / "config.toml"
 
 
-def load_config(repo_root: Path | None, explicit: Path | None = None) -> tuple[Config, list[str]]:
-    """Load and merge configuration files. Returns the config and the files used."""
-    candidates = [user_config_path()]
-    if repo_root is not None:
+def _read_file(path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".json":
+        data = json.loads(text)
+        if not isinstance(data, dict):
+            raise ValueError(f"{path}: top-level JSON value must be an object")
+        return data
+    return tomllib.loads(text)
+
+
+def load_config(
+    repo_root: Path | None, explicit: Path | None = None, *, discover: bool = True
+) -> tuple[Config, list[str]]:
+    """Load and merge configuration files. Returns the config and the files used.
+
+    ``discover=False`` skips the user and repository files and requires ``explicit``.
+    """
+    if not discover and explicit is None:
+        raise ValueError("an explicit config file is required when discovery is disabled")
+    candidates = [user_config_path()] if discover else []
+    if discover and repo_root is not None:
         candidates.append(repo_root / REPO_CONFIG_NAME)
     merged: dict[str, Any] = {}
     used: list[str] = []
     for path in candidates:
         if path.is_file():
-            merged = _deep_merge(merged, tomllib.loads(path.read_text(encoding="utf-8")))
+            merged = _deep_merge(merged, _read_file(path))
             used.append(str(path))
     if explicit is not None:
-        merged = _deep_merge(merged, tomllib.loads(explicit.read_text(encoding="utf-8")))
+        merged = _deep_merge(merged, _read_file(explicit))
         used.append(str(explicit))
     return Config.model_validate(merged), used
