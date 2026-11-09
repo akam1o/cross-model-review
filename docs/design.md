@@ -31,6 +31,10 @@ if the latest three reviews did not all see the final tree:
     one more review-only round
 ```
 
+A round that fixes nothing (`--review-only` and the extra final round) runs all
+three reviews at the same time, since they share the read-only workspace lock
+and read the same tree.
+
 The gate uses only the findings of the latest complete review of the final
 tree. Findings get fresh IDs per review and are not matched across iterations;
 earlier findings are kept in the report with their fix/verify status.

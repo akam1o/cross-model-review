@@ -8,6 +8,7 @@ import logging
 import os
 import secrets
 import tempfile
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -334,19 +335,21 @@ class Orchestrator:
         it.findings.extend(keys)
         return keys
 
-    async def _review_opus(self, iteration: int, it: IterationRecord) -> list[str]:
-        # Both are read-only and share the workspace lock, so they can run together.
-        results = await asyncio.gather(
-            self._review("review_design", iteration, it),
-            self._review("review_simplification", iteration, it),
-            return_exceptions=True,
-        )
-        keys: list[str] = []
+    @staticmethod
+    async def _together(*reviews: Awaitable[list[str]]) -> list[list[str]]:
+        # Reviews are read-only and share the workspace lock, so they can run together.
+        results = await asyncio.gather(*reviews, return_exceptions=True)
         for result in results:
             if isinstance(result, BaseException):
                 raise result
-            keys.extend(result)
-        return keys
+        return results  # type: ignore[return-value]
+
+    async def _review_opus(self, iteration: int, it: IterationRecord) -> list[str]:
+        design, simplification = await self._together(
+            self._review("review_design", iteration, it),
+            self._review("review_simplification", iteration, it),
+        )
+        return design + simplification
 
     async def _fix(self, keys: list[str], iteration: int, it: IterationRecord) -> bool:
         """Fix and verify ``keys``. Returns whether the workspace changed."""
@@ -508,12 +511,17 @@ class Orchestrator:
         start_tree = self.expected_tree
         carried, self.pending = self.pending, []
 
-        codex_keys = await self._review("review_changes", number, it)
-        to_fix = self._fixable(codex_keys) + carried
-        if allow_fix and to_fix and not self.no_progress:
-            await self._fix(to_fix, number, it)
-
-        opus_keys = await self._review_opus(number, it)
+        if allow_fix:
+            codex_keys = await self._review("review_changes", number, it)
+            to_fix = self._fixable(codex_keys) + carried
+            if to_fix and not self.no_progress:
+                await self._fix(to_fix, number, it)
+            opus_keys = await self._review_opus(number, it)
+        else:
+            # Nothing is fixed between the reviews, so all of them read the same tree at once.
+            _, opus_keys = await self._together(
+                self._review("review_changes", number, it), self._review_opus(number, it)
+            )
         to_fix = self._fixable(opus_keys) + self.pending
         self.pending = []
         if allow_fix and to_fix and not self.no_progress:
