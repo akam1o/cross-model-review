@@ -83,6 +83,7 @@ nothing:
   `in-place` mode too).
 - No `workspace.setup_commands` or `tests.commands` run, because configured
   commands could modify the code. `required_tests` is therefore `UNVERIFIED`.
+- Nothing is fixed between the reviews, so all three run at the same time.
 - Read-only tasks cannot change the snapshot, so the run stops after one
   round. `--max-iterations` is an upper bound, not a repeat count;
   `--max-iterations 2` still gives one round.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -171,6 +172,30 @@ async def test_review_only_clean_run_is_unverified(tmp_path, repo, lock_dir, mak
     targets = [r.target for r in codex.requests + opus.requests]
     assert len(targets) == 3 and all(t == targets[0] for t in targets)
     assert set(codex.calls) == {"review_changes"}
+
+
+async def test_review_only_runs_codex_and_opus_reviews_together(
+    tmp_path, repo, lock_dir, make_config
+):
+    opus = MockBackend("opus")
+
+    async def review_changes(request, ctx, n):
+        # Sequential reviews would start Opus only after this returns, so this times out.
+        await asyncio.wait_for(opus.started.wait(), timeout=10)
+        return review()
+
+    codex = MockBackend("codex", {"review_changes": review_changes})
+    async with mock_agents(tmp_path, lock_dir, codex, opus) as (cu, ou):
+        config = make_config(cu, ou, review_only=True)
+        report = await Orchestrator(RunOptions(repo=repo, config=config, agent_token=TOKEN)).run()
+
+    assert report.status == "reviewed", report.errors
+    assert check(report, "final_review") == "pass"
+    assert sorted(t.skill for t in report.iterations[0].tasks) == [
+        "review_changes",
+        "review_design",
+        "review_simplification",
+    ]
 
 
 async def test_review_only_guards(tmp_path, repo, make_config):

@@ -83,6 +83,7 @@ cross-model-review run --repo . [--base REF] [--config FILE] [--mode worktree|in
   （`in-place` モードでも同じ）。
 - 設定されたコマンドはコードを変更し得るため、`workspace.setup_commands` と
   `tests.commands` は実行しません。そのため `required_tests` は `UNVERIFIED` になります。
+- レビューの間に修正が入らないため、3 つのレビューを同時に実行します。
 - 読み取り専用タスクはスナップショットを変更できないため、1 ラウンドで終了します。
   `--max-iterations` は上限であり、繰り返し回数ではありません。
   `--max-iterations 2` でも 1 ラウンドです。
